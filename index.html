@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Naturgy Consulta · Suministros</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface-2: #18181f; --surface-3: #1e1e27;
+      --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
+      --text: #f0f0f5; --text-2: #9999aa; --text-3: #55556a;
+      --green: #22c55e; --green-dim: rgba(34,197,94,0.12);
+      --red: #ef4444; --red-dim: rgba(239,68,68,0.12);
+      --yellow: #f59e0b; --yellow-dim: rgba(245,158,11,0.12);
+      --blue: #3b82f6; --blue-dim: rgba(59,130,246,0.12);
+      --luz: #f59e0b; --luz-dim: rgba(245,158,11,0.1);
+      --gas: #ef4444; --gas-dim: rgba(239,68,68,0.1);
+      --accent: #6366f1; --accent-dim: rgba(99,102,241,0.15);
+      --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
+      --font: 'DM Sans', system-ui, sans-serif;
+      --mono: 'DM Mono', 'Consolas', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse 80% 50% at 20% -20%, rgba(99,102,241,0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 40% at 80% 110%, rgba(245,158,11,0.05) 0%, transparent 60%);
+    }
+    .app { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 40px 16px 80px; }
+    /* HEADER */
+    .header { text-align: center; margin-bottom: 40px; }
+    .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--text-2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+    .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+    h1 { font-size: clamp(24px, 5vw, 36px); font-weight: 700; letter-spacing: -1px; color: var(--text); line-height: 1.15; }
+    h1 span { color: var(--accent); }
+    .subtitle { margin-top: 10px; font-size: 15px; color: var(--text-2); font-weight: 400; }
+    /* SEARCH */
+    .search-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; transition: border-color 0.2s; }
+    .search-box:focus-within { border-color: var(--border-hover); }
+    .field-label { font-size: 11px; font-weight: 600; color: var(--text-3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; display: block; }
+    .input-wrap { position: relative; }
+    .search-input { width: 100%; background: var(--surface-2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px 48px 14px 16px; font-family: var(--font); font-size: 15px; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .search-input::placeholder { color: var(--text-3); }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+    .clear-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--surface-3); border: 1px solid var(--border); color: var(--text-2); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; display: none; align-items: center; justify-content: center; transition: all 0.15s; }
+    .clear-btn:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+    .suggestions { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface-2); border: 1px solid var(--border-hover); border-radius: var(--radius-sm); max-height: 240px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+    .suggestions.open { display: block; }
+    .suggestion-item { padding: 12px 16px; cursor: pointer; font-size: 13px; color: var(--text-2); border-bottom: 1px solid var(--border); transition: all 0.15s; display: flex; align-items: center; gap: 10px; }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--surface-3); color: var(--text); }
+    .suggestion-item .si-icon { font-size: 14px; flex-shrink: 0; }
+    .suggestions-loading { padding: 16px; text-align: center; font-size: 13px; color: var(--text-3); display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .floor-field { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 14px; animation: fadeIn 0.25s ease; }
+    /* SCORING */
+    .scoring-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+    .scoring-row { display: flex; gap: 10px; margin-top: 10px; }
+    .scoring-input { flex: 1; background: var(--surface-2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 13px 16px; font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); outline: none; text-transform: uppercase; letter-spacing: 2px; transition: border-color 0.2s, box-shadow 0.2s; }
+    .scoring-input::placeholder { text-transform: none; letter-spacing: 0; font-family: var(--font); font-size: 14px; color: var(--text-3); }
+    .scoring-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+    .scoring-btn { background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 13px 20px; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+    .scoring-btn:hover:not(:disabled) { background: #4f51e0; transform: translateY(-1px); }
+    .scoring-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .scoring-result { margin-top: 12px; padding: 10px 16px; border-radius: var(--radius-xs); font-size: 13px; font-weight: 700; text-align: center; display: none; }
+    .scoring-result.show { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .scoring-result.ok  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .scoring-result.bad { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
+    .scoring-result.err { background: var(--yellow-dim);color: var(--yellow);border: 1px solid rgba(245,158,11,0.2); }
+    .progress-bar { height: 3px; background: var(--surface-3); border-radius: 3px; margin-top: 10px; overflow: hidden; display: none; }
+    .progress-bar.show { display: block; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #a78bfa); border-radius: 3px; width: 0%; transition: width 0.4s ease; }
+    .progress-text { font-size: 11px; color: var(--accent); margin-top: 6px; display: none; }
+    .progress-text.show { display: flex; align-items: center; gap: 6px; }
+    /* BOTÓN CONSULTAR */
+    .btn-consultar { width: 100%; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 16px; font-family: var(--font); font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 24px; }
+    .btn-consultar:hover:not(:disabled) { background: #4f51e0; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.3); }
+    .btn-consultar:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    /* LOADER */
+    .loader { text-align: center; padding: 60px 0; display: none; }
+    .loader.show { display: block; }
+    .spinner { width: 40px; height: 40px; border: 3px solid var(--surface-3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 16px; }
+    .loader-text { font-size: 14px; color: var(--text-2); }
+    /* RESULTADOS */
+    .results { display: none; animation: fadeIn 0.4s ease; }
+    .results.show { display: block; }
+    .card-address { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 14px; }
+    .addr-icon { width: 38px; height: 38px; background: var(--accent-dim); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .addr-main { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .addr-sub { font-size: 13px; color: var(--text-2); margin-top: 3px; }
+    .card-cups { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+    .card-cups-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+    .card-cups-header.luz { background: linear-gradient(135deg, rgba(245,158,11,0.08), transparent); }
+    .card-cups-header.gas { background: linear-gradient(135deg, rgba(239,68,68,0.08), transparent); }
+    .cups-title { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+    .cups-title.luz { color: var(--luz); }
+    .cups-title.gas { color: var(--gas); }
+    .cups-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .cups-icon.luz { background: var(--luz-dim); }
+    .cups-icon.gas { background: var(--gas-dim); }
+    .status-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 50px; }
+    .status-badge.contratable { background: var(--green-dim); color: var(--green); }
+    .status-badge.activo      { background: var(--red-dim);   color: var(--red); }
+    .status-badge.en-curso    { background: var(--yellow-dim);color: var(--yellow); }
+    .status-badge.desconocido { background: var(--surface-3); color: var(--text-2); }
+    .card-cups-body { padding: 16px 18px; }
+    .cups-code { font-family: var(--mono); font-size: 12px; color: var(--text-2); background: var(--surface-2); padding: 10px 14px; border-radius: var(--radius-xs); letter-spacing: 1px; word-break: break-all; margin-bottom: 14px; border: 1px solid var(--border); }
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .metric { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 12px 14px; }
+    .metric-label { font-size: 10px; font-weight: 600; color: var(--text-3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .metric-value { font-size: 16px; font-weight: 700; color: var(--text); font-family: var(--mono); }
+    .metric-unit { font-size: 11px; font-weight: 400; color: var(--text-2); margin-left: 2px; }
+    .media-card { grid-column: 1 / -1; background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05)); border: 1px solid rgba(34,197,94,0.2); border-radius: var(--radius-xs); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .media-label { font-size: 12px; color: var(--green); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .media-value { font-size: 22px; font-weight: 700; color: var(--green); font-family: var(--mono); }
+    .media-value span { font-size: 13px; font-weight: 400; opacity: 0.7; }
+    /* ERROR */
+    .error-box { background: var(--red-dim); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius); padding: 20px; text-align: center; display: none; }
+    .error-box.show { display: block; }
+    .error-box p { color: var(--red); font-size: 14px; margin-top: 6px; }
+    /* IP WARNING */
+    .ip-banner { background: var(--yellow-dim); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: var(--yellow); margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px; }
+    .ip-banner .bang { font-size: 16px; flex-shrink: 0; }
+    /* COPIAR */
+    .copy-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .copy-btn { flex: 1; min-width: 140px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); border-radius: var(--radius-xs); padding: 10px 14px; font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .copy-btn:hover { background: var(--surface-3); color: var(--text); border-color: var(--border-hover); }
+    .copy-btn.copied { background: var(--green-dim); color: var(--green); border-color: rgba(34,197,94,0.3); }
+    /* ANIMACIONES */
+    @keyframes spin    { to { transform: rotate(360deg); } }
+    @keyframes fadeIn  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .mini-spin { width: 12px; height: 12px; border: 2px solid var(--surface-3); border-top-color: var(--accent); border-radius: 50%; display: inline-block; animation: spin 0.6s linear infinite; }
+    @media (max-width: 480px) {
+      .app { padding: 24px 12px 60px; }
+      .metrics-grid { grid-template-columns: 1fr; }
+      .media-card { grid-column: 1; }
+      .scoring-row { flex-direction: column; }
+      .scoring-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="logo"><div class="logo-dot"></div>Consulta de Suministros</div>
+    <h1>Datos <span>Naturgy</span><br>en segundos</h1>
+    <p class="subtitle">Busca por dirección o CUPS · Verifica scoring de DNI</p>
+  </header>
+
+  <div class="ip-banner">
+    <span class="bang">⚠️</span>
+    <span>Esta herramienta requiere IP española, holandesa o alemana. Activa tu VPN antes de consultar para obtener resultados correctos.</span>
+  </div>
+
+  <div class="search-box">
+    <label class="field-label">📍 Dirección o CUPS de luz/gas</label>
+    <div class="input-wrap" id="search-wrap">
+      <input type="text" id="search-input" class="search-input"
+        placeholder="Calle Gran Vía 1, Madrid · o pega un CUPS"
+        autocomplete="off" spellcheck="false" />
+      <button class="clear-btn" id="clear-btn" title="Limpiar">✕</button>
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+    <div class="floor-field" id="floor-field" style="display:none">
+      <label class="field-label">🏠 Piso / Vivienda</label>
+      <div class="input-wrap">
+        <input type="text" id="floor-input" class="search-input"
+          placeholder="Selecciona o escribe el piso..." autocomplete="off" readonly />
+        <div class="suggestions" id="floor-suggestions"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-consultar" id="btn-consultar" disabled>⚡ Consultar suministros</button>
+
+  <div class="scoring-section">
+    <label class="field-label">🔐 Verificar scoring de DNI / NIE</label>
+    <div class="scoring-row">
+      <input type="text" id="dni-input" class="scoring-input"
+        placeholder="Introduce DNI o NIE" maxlength="9" />
+      <button class="scoring-btn" id="scoring-btn">Verificar</button>
+    </div>
+    <div class="progress-bar" id="scoring-progress">
+      <div class="progress-fill" id="scoring-fill"></div>
+    </div>
+    <div class="progress-text" id="scoring-text">
+      <span class="mini-spin"></span>
+      <span id="scoring-status-text">Verificando...</span>
+    </div>
+    <div class="scoring-result" id="scoring-result"></div>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p class="loader-text" id="loader-text">Consultando datos de suministro...</p>
+  </div>
+
+  <div class="error-box" id="error-box">
+    <div style="font-size:28px">⚠️</div>
+    <p id="error-text">Ha ocurrido un error al consultar</p>
+  </div>
+
+  <div class="results" id="results"></div>
+
+</div>
+<script>
+  // API_BASE vacío = el frontend llama al mismo servidor que lo sirve
+  const API_BASE = '';
+
+  let state = {
+    selectedAddress: null,
+    selectedFloor:   null,
+    currentCupsData: null,
+    debounceTimer:   null,
+    scoringEnProceso: false
+  };
+
+  const searchInput    = document.getElementById('search-input');
+  const clearBtn       = document.getElementById('clear-btn');
+  const suggestionsDiv = document.getElementById('suggestions');
+  const floorField     = document.getElementById('floor-field');
+  const floorInput     = document.getElementById('floor-input');
+  const floorSuggestions = document.getElementById('floor-suggestions');
+  const btnConsultar   = document.getElementById('btn-consultar');
+  const loader         = document.getElementById('loader');
+  const loaderText     = document.getElementById('loader-text');
+  const errorBox       = document.getElementById('error-box');
+  const errorText      = document.getElementById('error-text');
+  const resultsDiv     = document.getElementById('results');
+  const dniInput       = document.getElementById('dni-input');
+  const scoringBtn     = document.getElementById('scoring-btn');
+  const scoringResult  = document.getElementById('scoring-result');
+  const scoringProgress = document.getElementById('scoring-progress');
+  const scoringFill    = document.getElementById('scoring-fill');
+  const scoringText    = document.getElementById('scoring-text');
+  const scoringStatusText = document.getElementById('scoring-status-text');
+
+  // ── UTILIDADES ──
+  function detectarTipoBusqueda(texto) {
+    const clean = texto.trim().toUpperCase().replace(/\s/g, '');
+    if (clean.startsWith('ES00') && clean.length >= 20) return { tipo: 'cups-luz', cups: clean };
+    if (clean.startsWith('ES02') && clean.length >= 20) return { tipo: 'cups-gas', cups: clean };
+    if (clean.startsWith('ES0') && clean.length >= 4) return { tipo: 'cups-parcial' };
+    return { tipo: 'direccion' };
+  }
+
+  function formatFloorLabel(item) {
+    const parts = [];
+    if (item.building)      parts.push('Edif. ' + item.building);
+    if (item.staircase)     parts.push('Esc. '  + item.staircase);
+    if (item.floor)         parts.push('Piso '  + item.floor);
+    if (item.door)          parts.push('Pta. '  + item.door);
+    if (item.restOfAddress) parts.push(item.restOfAddress);
+    return parts.join(', ') || 'Dirección única';
+  }
+
+  async function apiGet(endpoint) {
+    const res = await fetch(API_BASE + endpoint);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  async function apiPost(endpoint, body) {
+    const res = await fetch(API_BASE + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'HTTP ' + res.status);
+    }
+    return res.json();
+  }
+
+  // ── AUTOCOMPLETE ──
+  searchInput.addEventListener('input', (e) => {
+    const val = e.target.value.trim();
+    clearBtn.style.display = val ? 'flex' : 'none';
+    clearTimeout(state.debounceTimer);
+    if (!val) { suggestionsDiv.classList.remove('open'); suggestionsDiv.innerHTML = ''; return; }
+
+    const det = detectarTipoBusqueda(val);
+    if (det.tipo === 'cups-luz' || det.tipo === 'cups-gas') {
+      suggestionsDiv.classList.remove('open');
+      state.selectedAddress = { tipo: det.tipo, cups: det.cups };
+      btnConsultar.disabled = false;
+      floorField.style.display = 'none';
+      return;
+    }
+    if (det.tipo === 'cups-parcial') {
+      suggestionsDiv.innerHTML = '<div class="suggestions-loading">💡 CUPS detectado — escribe hasta completar 20 caracteres</div>';
+      suggestionsDiv.classList.add('open');
+      btnConsultar.disabled = true;
+      return;
+    }
+    state.debounceTimer = setTimeout(async () => {
+      if (val.length < 4) return;
+      suggestionsDiv.innerHTML = '<div class="suggestions-loading"><span class="mini-spin"></span> Buscando...</div>';
+      suggestionsDiv.classList.add('open');
+      try {
+        const data = await apiGet('/autocomplete?q=' + encodeURIComponent(val));
+        renderSuggestions(data.results || []);
+      } catch {
+        suggestionsDiv.innerHTML = '<div class="suggestions-loading">⚠️ Sin conexión al servidor</div>';
+      }
+    }, 300);
+  });
+
+  function renderSuggestions(results) {
+    if (!results.length) {
+      suggestionsDiv.innerHTML = '<div class="suggestions-loading">No se encontraron resultados</div>';
+      return;
+    }
+    suggestionsDiv.innerHTML = results.map((r, i) =>
+      '<div class="suggestion-item" data-index="' + i + '"><span class="si-icon">📍</span><span>' + r.niceAddress + '</span></div>'
+    ).join('');
+    suggestionsDiv.querySelectorAll('.suggestion-item').forEach(el => {
+      el.addEventListener('click', () => selectAddress(results[parseInt(el.dataset.index)]));
+    });
+  }
+
+  async function selectAddress(item) {
+    searchInput.value = item.niceAddress;
+    suggestionsDiv.classList.remove('open');
+    state.selectedAddress = item;
+    btnConsultar.disabled = true;
+    floorField.style.display = 'block';
+    floorInput.value = '';
+    floorInput.readOnly = true;
+    floorSuggestions.innerHTML = '<div class="suggestions-loading"><span class="mini-spin"></span> Cargando viviendas...</div>';
+    floorSuggestions.classList.add('open');
+    try {
+      const params = new URLSearchParams({
+        uuid: item.uuid || '', placeIDGoogle: item.placeIDGoogle || '',
+        label: item.niceAddress, origin: item.origin || 'sips', types: item.types || ''
+      });
+      const data = await apiGet('/horizontal?' + params);
+      const floors = data.results || [];
+      if (!floors.length) {
+        floorSuggestions.innerHTML = '<div class="suggestions-loading">⚠️ No se encontraron viviendas</div>';
+        return;
+      }
+      renderFloors(floors);
+    } catch {
+      floorSuggestions.innerHTML = '<div class="suggestions-loading">⚠️ Error al cargar viviendas</div>';
+    }
+  }
+
+  function renderFloors(floors) {
+    floorSuggestions.innerHTML = floors.map((f, i) =>
+      '<div class="suggestion-item" data-index="' + i + '"><span class="si-icon">🏠</span><span>' + formatFloorLabel(f) + '</span></div>'
+    ).join('');
+    floorSuggestions.querySelectorAll('.suggestion-item').forEach(el => {
+      el.addEventListener('click', async () => {
+        const floor = floors[parseInt(el.dataset.index)];
+        const label = formatFloorLabel(floor);
+        floorInput.value = label;
+        floorSuggestions.classList.remove('open');
+        floorInput.readOnly = true;
+        loaderText.textContent = 'Obteniendo datos de la vivienda...';
+        loader.classList.add('show');
+        try {
+          const params = new URLSearchParams({ id: floor.id, label });
+          const data = await apiGet('/vertical?' + params);
+          loader.classList.remove('show');
+          state.currentCupsData = data;
+          renderResults(data);
+          btnConsultar.disabled = true;
+        } catch (err) {
+          loader.classList.remove('show');
+          showError('Error al obtener datos de la vivienda: ' + err.message);
+        }
+      });
+    });
+    floorSuggestions.classList.add('open');
+    floorInput.readOnly = false;
+    floorInput.placeholder = 'Selecciona la vivienda...';
+  }
+
+  floorInput.addEventListener('focus', () => {
+    if (floorSuggestions.innerHTML && !floorInput.readOnly) floorSuggestions.classList.add('open');
+  });
+
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = ''; clearBtn.style.display = 'none';
+    suggestionsDiv.classList.remove('open'); floorField.style.display = 'none';
+    state.selectedAddress = null; state.currentCupsData = null;
+    btnConsultar.disabled = true;
+    resultsDiv.classList.remove('show'); errorBox.classList.remove('show');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#search-wrap'))  suggestionsDiv.classList.remove('open');
+    if (!e.target.closest('#floor-field')) floorSuggestions.classList.remove('open');
+  });
+
+  // ── CONSULTAR (CUPS directo) ──
+  btnConsultar.addEventListener('click', async () => {
+    if (!state.selectedAddress) return;
+    loaderText.textContent = 'Consultando datos de suministro...';
+    loader.classList.add('show');
+    errorBox.classList.remove('show');
+    resultsDiv.classList.remove('show');
+    btnConsultar.disabled = true;
+    try {
+      const data = await apiPost('/consultar', { tipo: 'cups', cups: state.selectedAddress.cups });
+      loader.classList.remove('show');
+      state.currentCupsData = data;
+      renderResults(data);
+    } catch (err) {
+      loader.classList.remove('show');
+      showError(err.message);
+    } finally {
+      btnConsultar.disabled = false;
+    }
+  });
+
+  // ── SCORING ──
+  dniInput.addEventListener('input', () => {
+    const val = dniInput.value.trim().toUpperCase();
+    if (val.length === 9) {
+      const ok = /^[0-9]{8}[A-Z]$/.test(val) || /^[XYZ][0-9]{7}[A-Z]$/.test(val);
+      if (ok && !state.scoringEnProceso) setTimeout(() => { if (dniInput.value.trim().toUpperCase() === val) runScoring(val); }, 300);
+    }
+  });
+  scoringBtn.addEventListener('click', () => { const val = dniInput.value.trim().toUpperCase(); if (val) runScoring(val); });
+  dniInput.addEventListener('paste', () => {
+    setTimeout(() => { const val = dniInput.value.trim().toUpperCase(); if (val.length === 9 && !state.scoringEnProceso) runScoring(val); }, 100);
+  });
+
+  async function runScoring(dni) {
+    if (state.scoringEnProceso) return;
+    state.scoringEnProceso = true;
+    scoringResult.className = 'scoring-result';
+    scoringProgress.classList.add('show');
+    scoringText.classList.add('show');
+    scoringFill.style.width = '5%';
+    scoringStatusText.textContent = 'Iniciando verificación...';
+    scoringBtn.disabled = true;
+    dniInput.disabled = true;
+
+    const steps = [[15,'Verificando disponibilidad...'],[35,'Preparando consulta...'],[55,'Revisando historial...'],[75,'Analizando datos...'],[90,'Finalizando...']];
+    let stepIdx = 0;
+    const iv = setInterval(() => {
+      if (stepIdx < steps.length) { scoringFill.style.width = steps[stepIdx][0] + '%'; scoringStatusText.textContent = steps[stepIdx][1]; stepIdx++; }
+    }, 1500);
+
+    try {
+      const data = await apiPost('/consultar', { tipo: 'scoring', dni });
+      clearInterval(iv);
+      scoringFill.style.width = '100%';
+      scoringStatusText.textContent = '¡Completado!';
+      setTimeout(() => {
+        scoringProgress.classList.remove('show');
+        scoringText.classList.remove('show');
+        scoringFill.style.width = '0%';
+        if (data.esScoring) {
+          scoringResult.className = 'scoring-result show bad';
+          scoringResult.innerHTML = '⚠️ ES SCORING — Riesgo de impago detectado';
+        } else {
+          scoringResult.className = 'scoring-result show ok';
+          scoringResult.innerHTML = '✅ NO ES SCORING — Puede contratar sin restricciones';
+        }
+      }, 500);
+    } catch (err) {
+      clearInterval(iv);
+      scoringProgress.classList.remove('show');
+      scoringText.classList.remove('show');
+      scoringResult.className = 'scoring-result show err';
+      scoringResult.innerHTML = '⚠️ ' + (err.message || 'Error al verificar');
+    } finally {
+      state.scoringEnProceso = false;
+      scoringBtn.disabled = false;
+      dniInput.disabled = false;
+    }
+  }
+
+  // ── RENDER RESULTADOS ──
+  function getStatusBadge(estado) {
+    if (!estado) return '<span class="status-badge desconocido">⚪ Sin datos</span>';
+    const cls = estado.contratable ? 'contratable' : (estado.texto.includes('curso') ? 'en-curso' : 'activo');
+    return '<span class="status-badge ' + cls + '">' + estado.icono + ' ' + estado.texto + '</span>';
+  }
+
+  function renderResults(data) {
+    errorBox.classList.remove('show');
+    let html = '';
+
+    if (data.direccion && (data.direccion.calle || data.direccion.cp)) {
+      const d = data.direccion;
+      const calleCompleta = [d.calle, d.piso].filter(Boolean).join(' · ');
+      const localidad     = [d.cp, d.municipio, d.provincia].filter(Boolean).join(' · ');
+      html += '<div class="card-address"><div class="addr-icon">📍</div><div class="addr-text">'
+        + (calleCompleta ? '<div class="addr-main">' + calleCompleta + '</div>' : '')
+        + (localidad     ? '<div class="addr-sub">'  + localidad     + '</div>' : '')
+        + '</div></div>';
+    }
+
+    if (data.luz) {
+      const l = data.luz;
+      html += '<div class="card-cups"><div class="card-cups-header luz">'
+        + '<div class="cups-title luz"><div class="cups-icon luz">⚡</div>LUZ</div>'
+        + getStatusBadge(l.estado)
+        + '</div><div class="card-cups-body">'
+        + '<div class="cups-code">' + l.cups + '</div>'
+        + '<div class="metrics-grid">'
+        + (l.mediaMensual !== null ? '<div class="media-card"><div class="media-label">💰 Media mensual estimada</div><div class="media-value">' + l.mediaMensual + ' <span>€/mes</span></div></div>' : '')
+        + (l.consumoAnual !== null ? '<div class="metric"><div class="metric-label">Consumo anual</div><div class="metric-value">' + l.consumoAnual.toLocaleString('es-ES') + '<span class="metric-unit"> kWh</span></div></div>' : '')
+        + (l.potenciaP1   !== null ? '<div class="metric"><div class="metric-label">Potencia P1</div><div class="metric-value">' + l.potenciaP1 + '<span class="metric-unit"> kW</span></div></div>' : '')
+        + (l.potenciaP2   !== null ? '<div class="metric"><div class="metric-label">Potencia P2</div><div class="metric-value">' + l.potenciaP2 + '<span class="metric-unit"> kW</span></div></div>' : '')
+        + (l.tarifa              ? '<div class="metric"><div class="metric-label">Tarifa</div><div class="metric-value" style="font-size:14px">' + l.tarifa + '</div></div>' : '')
+        + '</div></div></div>';
+    }
+
+    if (data.gas) {
+      const g = data.gas;
+      html += '<div class="card-cups"><div class="card-cups-header gas">'
+        + '<div class="cups-title gas"><div class="cups-icon gas">🔥</div>GAS</div>'
+        + getStatusBadge(g.estado)
+        + '</div><div class="card-cups-body">'
+        + '<div class="cups-code">' + g.cups + '</div>'
+        + '<div class="metrics-grid">'
+        + (g.mediaMensual !== null ? '<div class="media-card"><div class="media-label">💰 Media mensual estimada</div><div class="media-value">' + g.mediaMensual + ' <span>€/mes</span></div></div>' : '')
+        + (g.consumoAnual !== null ? '<div class="metric"><div class="metric-label">Consumo anual</div><div class="metric-value">' + g.consumoAnual.toLocaleString('es-ES') + '<span class="metric-unit"> kWh</span></div></div>' : '')
+        + (g.tarifa              ? '<div class="metric"><div class="metric-label">Tarifa</div><div class="metric-value" style="font-size:14px">' + g.tarifa.replace('.', '') + '</div></div>' : '')
+        + '</div></div></div>';
+    }
+
+    if (!data.luz && !data.gas) {
+      html += '<div class="card-address" style="justify-content:center;text-align:center;padding:30px;"><div><div style="font-size:32px;margin-bottom:10px">🔍</div><p style="color:var(--text-2);font-size:14px">No se encontraron datos de suministro para esta dirección</p></div></div>';
+    }
+
+    if (state.currentCupsData && (data.luz || data.gas)) {
+      html += '<div class="copy-row"><button class="copy-btn" id="copy-main-btn">📋 Copiar dirección y CUPS</button><button class="copy-btn" id="copy-data-btn">📊 Copiar consumo y potencia</button></div>';
+    }
+
+    resultsDiv.innerHTML = html;
+    resultsDiv.classList.add('show');
+
+    const copyMain = document.getElementById('copy-main-btn');
+    const copyData = document.getElementById('copy-data-btn');
+    if (copyMain) copyMain.addEventListener('click', () => copyToClipboard(generateCopyText(data), copyMain, '📋 Copiar dirección y CUPS'));
+    if (copyData) copyData.addEventListener('click', () => { const t = generateConsumoText(data); if (t.trim()) copyToClipboard(t, copyData, '📊 Copiar consumo y potencia'); });
+  }
+
+  function generateCopyText(data) {
+    const lines = [];
+    if (data.direccion) {
+      const d = data.direccion;
+      if (d.calle) lines.push(d.calle + (d.piso ? ' · ' + d.piso : ''));
+      if (d.cp || d.municipio) lines.push([d.cp, d.municipio].filter(Boolean).join(' - '));
+      if (d.provincia) lines.push(d.provincia);
+      lines.push('');
+    }
+    if (data.luz) {
+      lines.push('CUPS LUZ: ' + data.luz.cups);
+      if (data.luz.estado) lines.push('Estado: ' + data.luz.estado.texto + ' ' + data.luz.estado.icono);
+      if (data.luz.mediaMensual !== null) lines.push('Media mensual: ' + data.luz.mediaMensual + ' €');
+      lines.push('');
+    }
+    if (data.gas) {
+      lines.push('CUPS GAS: ' + data.gas.cups);
+      if (data.gas.tarifa) lines.push('Tarifa: ' + data.gas.tarifa.replace('.', ''));
+      if (data.gas.estado) lines.push('Estado: ' + data.gas.estado.texto + ' ' + data.gas.estado.icono);
+      if (data.gas.mediaMensual !== null) lines.push('Media mensual: ' + data.gas.mediaMensual + ' €');
+    }
+    return lines.join('\n');
+  }
+
+  function generateConsumoText(data) {
+    const lines = [];
+    if (data.luz && (data.luz.consumoAnual !== null || data.luz.potenciaP1 !== null)) {
+      lines.push('LUZ:');
+      if (data.luz.consumoAnual !== null) lines.push('Consumo anual: ' + data.luz.consumoAnual + ' kWh');
+      if (data.luz.potenciaP1   !== null) lines.push('Potencia P1: '   + data.luz.potenciaP1   + ' kW');
+      if (data.luz.potenciaP2   !== null) lines.push('Potencia P2: '   + data.luz.potenciaP2   + ' kW');
+      lines.push('');
+    }
+    if (data.gas && data.gas.consumoAnual !== null) {
+      lines.push('GAS:');
+      lines.push('Consumo anual: ' + data.gas.consumoAnual + ' kWh');
+    }
+    return lines.join('\n');
+  }
+
+  function copyToClipboard(text, btn, originalText) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copiado';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = originalText; btn.classList.remove('copied'); }, 2000);
+    }).catch(() => alert('No se pudo copiar al portapapeles'));
+  }
+
+  function showError(msg) {
+    errorText.textContent = msg || 'Error al consultar. Comprueba tu VPN y vuelve a intentar.';
+    errorBox.classList.add('show');
+    resultsDiv.classList.remove('show');
+    loader.classList.remove('show');
+  }
+</script>
+</body>
+</html>
